@@ -10,55 +10,71 @@ const __dirname = path.dirname(__filename);
 const dbPath = process.env.VERCEL ? '/tmp/tasks.db' : 'tasks.db';
 const db = new Database(dbPath);
 
-// Initialize Database
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE,
-    password TEXT,
-    role TEXT CHECK(role IN ('master', 'collaborator')),
-    name TEXT
-  );
+// Function to initialize and seed the database
+function initDb() {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT UNIQUE,
+      password TEXT,
+      role TEXT CHECK(role IN ('master', 'collaborator')),
+      name TEXT
+    );
 
-  CREATE TABLE IF NOT EXISTS tasks (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT,
-    description TEXT,
-    assigned_to INTEGER,
-    status TEXT DEFAULT 'pending',
-    failure_reason TEXT,
-    due_date TEXT,
-    FOREIGN KEY(assigned_to) REFERENCES users(id)
-  );
+    CREATE TABLE IF NOT EXISTS tasks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT,
+      description TEXT,
+      assigned_to INTEGER,
+      status TEXT DEFAULT 'pending',
+      failure_reason TEXT,
+      due_date TEXT,
+      FOREIGN KEY(assigned_to) REFERENCES users(id)
+    );
 
-  CREATE TABLE IF NOT EXISTS time_logs (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER,
-    type TEXT,
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY(user_id) REFERENCES users(id)
-  );
+    CREATE TABLE IF NOT EXISTS time_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      type TEXT,
+      timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(user_id) REFERENCES users(id)
+    );
 
-  CREATE TABLE IF NOT EXISTS feedback (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER,
-    content TEXT,
-    date TEXT,
-    FOREIGN KEY(user_id) REFERENCES users(id)
-  );
-`);
+    CREATE TABLE IF NOT EXISTS feedback (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      content TEXT,
+      date TEXT,
+      FOREIGN KEY(user_id) REFERENCES users(id)
+    );
+  `);
 
-// Seed initial master user if not exists
-const masterExists = db.prepare("SELECT * FROM users WHERE role = 'master'").get();
-if (!masterExists) {
-  db.prepare("INSERT INTO users (username, password, role, name) VALUES (?, ?, ?, ?)").run("admin", "admin123", "master", "Administrador");
+  // Seed initial master user if not exists
+  const masterExists = db.prepare("SELECT * FROM users WHERE role = 'master'").get();
+  if (!masterExists) {
+    db.prepare("INSERT INTO users (username, password, role, name) VALUES (?, ?, ?, ?)").run("admin", "admin123", "master", "Administrador");
+  }
 }
+
+// Initialize immediately
+initDb();
 
 async function startServer() {
   const app = express();
   const PORT = process.env.PORT || 3000;
 
   app.use(express.json());
+
+  // Middleware to ensure DB is initialized (extra safety for serverless)
+  app.use((req, res, next) => {
+    try {
+      initDb();
+      next();
+    } catch (e) {
+      console.error("DB Init Error:", e);
+      next();
+    }
+  });
 
   // Simple API Key middleware for AI integration
   const aiAuth = (req: express.Request, res: express.Response, next: express.NextFunction) => {
