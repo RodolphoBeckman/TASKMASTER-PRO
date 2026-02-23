@@ -602,8 +602,14 @@ INSERT INTO users (username, password, role, name) VALUES ('admin', 'admin123', 
             </div>
             <div>
               <label className="text-xs font-bold text-zinc-400 uppercase">2. Variável no Vercel (DATABASE_URL)</label>
-              <p className="text-xs text-zinc-500 mb-2">Pegue em: Settings &gt; Database &gt; Connection String &gt; URI</p>
-              <input readOnly value="postgres://postgres.[PROJETO]:[SENHA]@[HOST]:5432/postgres" className="w-full p-2 bg-zinc-50 border rounded text-xs font-mono" />
+              <p className="text-xs text-zinc-500 mb-2">Pegue em: Settings &gt; Database &gt; Connection String &gt; <b>Transaction Mode (Port 6543)</b></p>
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg mb-2">
+                <p className="text-[10px] text-red-800"><b>⚠️ ATENÇÃO:</b> Remova os colchetes <b>[ ]</b> da senha. Use apenas a senha pura.</p>
+              </div>
+              <input readOnly value="postgres://postgres.[PROJETO]:[SENHA]@[HOST]:6543/postgres?pgbouncer=true" className="w-full p-2 bg-zinc-50 border rounded text-xs font-mono" />
+            </div>
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-[10px] text-blue-800 font-medium">🚀 Após salvar no Vercel, vá em <b>Deployments</b> e clique em <b>Redeploy</b>.</p>
             </div>
           </div>
         </div>

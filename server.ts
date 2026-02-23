@@ -1,5 +1,4 @@
 import express from "express";
-import { createServer as createViteServer } from "vite";
 import Database from "better-sqlite3";
 import pg from "pg";
 import path from "path";
@@ -160,11 +159,17 @@ async function startServer() {
   // Auth API
   app.post("/api/login", async (req, res) => {
     const { username, password } = req.body;
-    const user = await getOne("SELECT id, username, role, name FROM users WHERE username = $1 AND password = $2", [username, password]);
-    if (user) {
-      res.json(user);
-    } else {
-      res.status(401).json({ error: "Credenciais inválidas" });
+    try {
+      const user = await getOne("SELECT id, username, role, name FROM users WHERE username = $1 AND password = $2", [username, password]);
+      if (user) {
+        res.json(user);
+      } else {
+        console.log(`Login falhou: Usuário '${username}' não encontrado ou senha incorreta.`);
+        res.status(401).json({ error: "Credenciais inválidas" });
+      }
+    } catch (error) {
+      console.error("Erro crítico no login:", error);
+      res.status(500).json({ error: "Erro interno no servidor ao tentar logar. Verifique a conexão com o banco de dados." });
     }
   });
 
@@ -238,6 +243,7 @@ async function startServer() {
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
