@@ -13,8 +13,12 @@ let db: any;
 let pgPool: pg.Pool | null = null;
 
 if (isPostgres) {
+  const dbUrl = process.env.DATABASE_URL || "";
+  const maskedUrl = dbUrl.replace(/:([^:@]+)@/, ":****@");
+  console.log(`Tentando conectar ao PostgreSQL: ${maskedUrl}`);
+  
   pgPool = new pg.Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: dbUrl,
     ssl: { rejectUnauthorized: false }
   });
   console.log("Using PostgreSQL Database");
