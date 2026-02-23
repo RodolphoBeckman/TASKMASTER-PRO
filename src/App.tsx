@@ -582,6 +582,35 @@ function AdminView() {
 
       <div className="bg-white rounded-2xl border border-zinc-200 overflow-hidden shadow-sm mb-8">
         <div className="p-6 border-b border-zinc-200">
+          <h3 className="font-bold text-lg mb-2">Conectar ao Supabase (Vercel)</h3>
+          <p className="text-sm text-zinc-500 mb-4">Siga os passos para que seus dados não sumam no Vercel:</p>
+          <div className="space-y-4">
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-xs text-amber-800 font-medium">⚠️ Importante: Use os nomes de tabelas em INGLÊS conforme o script abaixo para o sistema funcionar.</p>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-zinc-400 uppercase">1. Script SQL (Copie e rode no SQL Editor do Supabase)</label>
+              <div className="bg-zinc-900 p-4 rounded-lg mt-1 overflow-x-auto">
+                <pre className="text-[10px] text-emerald-400 font-mono">
+{`CREATE TABLE users (id SERIAL PRIMARY KEY, username TEXT UNIQUE, password TEXT, role TEXT, name TEXT);
+CREATE TABLE tasks (id SERIAL PRIMARY KEY, title TEXT, description TEXT, assigned_to INTEGER REFERENCES users(id), status TEXT DEFAULT 'pending', failure_reason TEXT, due_date TEXT);
+CREATE TABLE time_logs (id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users(id), type TEXT, timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE feedback (id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users(id), content TEXT, date TEXT);
+INSERT INTO users (username, password, role, name) VALUES ('admin', 'admin123', 'master', 'Administrador');`}
+                </pre>
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-zinc-400 uppercase">2. Variável no Vercel (DATABASE_URL)</label>
+              <p className="text-xs text-zinc-500 mb-2">Pegue em: Settings &gt; Database &gt; Connection String &gt; URI</p>
+              <input readOnly value="postgres://postgres.[PROJETO]:[SENHA]@[HOST]:5432/postgres" className="w-full p-2 bg-zinc-50 border rounded text-xs font-mono" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-zinc-200 overflow-hidden shadow-sm mb-8">
+        <div className="p-6 border-b border-zinc-200">
           <h3 className="font-bold text-lg mb-2">Integração com IA (Manus AI)</h3>
           <p className="text-sm text-zinc-500 mb-4">Use os dados abaixo para conectar o TaskMaster Pro ao seu agente de IA.</p>
           <div className="space-y-3">
