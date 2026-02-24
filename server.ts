@@ -174,6 +174,14 @@ async function startServer() {
         return res.json({ status: "error", message: "DATABASE_URL não configurada no Vercel." });
       }
 
+      if (dbUrl.includes("%40")) {
+        return res.json({ 
+          status: "error", 
+          message: "ERRO DE FORMATAÇÃO: Sua URL contém '%40' em vez de '@'.",
+          details: "O Vercel às vezes codifica o símbolo @. Por favor, edite a variável no Vercel e troque o '%40' por um '@' manual."
+        });
+      }
+
       const result = await query("SELECT current_database(), now()");
       const tables = await query("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'");
       
