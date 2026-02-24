@@ -164,6 +164,40 @@ async function startServer() {
     });
   });
 
+  // Manual Connection Test API
+  app.post("/api/test-manual-connection", async (req, res) => {
+    const { connectionString } = req.body;
+    if (!connectionString) return res.status(400).json({ error: "URL não fornecida" });
+
+    const tempPool = new pg.Pool({
+      connectionString,
+      ssl: { rejectUnauthorized: false },
+      connectionTimeoutMillis: 5000
+    });
+
+    try {
+      const client = await tempPool.connect();
+      const result = await client.query("SELECT current_database(), now()");
+      client.release();
+      await tempPool.end();
+      
+      res.json({ 
+        status: "ok", 
+        message: "Conexão manual bem-sucedida!",
+        database: result.rows[0]?.current_database,
+        time: result.rows[0]?.now
+      });
+    } catch (error: any) {
+      await tempPool.end();
+      res.status(500).json({ 
+        status: "error", 
+        message: error.message,
+        code: error.code,
+        hostname: error.hostname
+      });
+    }
+  });
+
   // Health & Debug API
   app.get("/api/debug-db", async (req, res) => {
     try {

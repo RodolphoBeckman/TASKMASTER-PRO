@@ -136,7 +136,7 @@ export default function App() {
             <div className="pt-4 border-t border-zinc-100">
               <div className="bg-zinc-50 p-3 rounded-xl border border-zinc-200">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Status da Integração</span>
+                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Diagnóstico do Banco</span>
                   <div className="flex items-center gap-1.5">
                     <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" id="db-status-dot"></div>
                     <span className="text-[10px] text-zinc-500 font-medium" id="db-status-text">Verificando...</span>
@@ -146,36 +146,73 @@ export default function App() {
                 <div id="db-error-msg" className="hidden mb-3 p-2 bg-red-100 border border-red-200 rounded text-[9px] text-red-700 leading-tight">
                 </div>
 
-                <button
-                  type="button"
-                  onClick={async () => {
-                    const dot = document.getElementById('db-status-dot');
-                    const text = document.getElementById('db-status-text');
-                    const errorMsg = document.getElementById('db-error-msg');
-                    try {
-                      const res = await fetch("/api/debug-db");
-                      const data = await res.json();
-                      if (data.status === "ok") {
-                        if (dot) dot.className = "w-2 h-2 rounded-full bg-emerald-500";
-                        if (text) text.innerText = "Conectado";
-                        if (errorMsg) errorMsg.className = "hidden";
-                        alert(`✅ TUDO CERTO!\n\nBanco: ${data.database}\nUsuário Admin: ${data.adminUser}`);
-                      } else {
-                        if (dot) dot.className = "w-2 h-2 rounded-full bg-red-500";
-                        if (text) text.innerText = "Erro de Conexão";
-                        if (errorMsg) {
-                          errorMsg.className = "block mb-3 p-2 bg-red-100 border border-red-200 rounded text-[9px] text-red-700 leading-tight";
-                          errorMsg.innerText = `ERRO: ${data.message}\n\n${data.details}`;
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const dot = document.getElementById('db-status-dot');
+                      const text = document.getElementById('db-status-text');
+                      const errorMsg = document.getElementById('db-error-msg');
+                      try {
+                        const res = await fetch("/api/debug-db");
+                        const data = await res.json();
+                        if (data.status === "ok") {
+                          if (dot) dot.className = "w-2 h-2 rounded-full bg-emerald-500";
+                          if (text) text.innerText = "Conectado";
+                          if (errorMsg) errorMsg.className = "hidden";
+                          alert(`✅ CONEXÃO ATUAL OK!\n\nBanco: ${data.database}\nUsuário Admin: ${data.adminUser}`);
+                        } else {
+                          if (dot) dot.className = "w-2 h-2 rounded-full bg-red-500";
+                          if (text) text.innerText = "Erro de Conexão";
+                          if (errorMsg) {
+                            errorMsg.className = "block mb-3 p-2 bg-red-100 border border-red-200 rounded text-[9px] text-red-700 leading-tight";
+                            errorMsg.innerText = `ERRO NA URL DO VERCEL: ${data.message}\n\n${data.details}`;
+                          }
                         }
+                      } catch (e) {
+                        alert("Erro ao falar com o servidor.");
                       }
-                    } catch (e) {
-                      alert("Erro ao falar com o servidor.");
-                    }
-                  }}
-                  className="w-full py-2 bg-white border border-zinc-200 rounded-lg text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all uppercase tracking-tighter"
-                >
-                  Testar Conexão Agora
-                </button>
+                    }}
+                    className="w-full py-2 bg-white border border-zinc-200 rounded-lg text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all uppercase tracking-tighter"
+                  >
+                    Testar Configuração do Vercel
+                  </button>
+
+                  <div className="relative">
+                    <input 
+                      id="manual-db-url"
+                      type="text" 
+                      placeholder="Cole aqui a URL para testar manualmente..."
+                      className="w-full p-2 text-[9px] border rounded bg-white font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const url = (document.getElementById('manual-db-url') as HTMLInputElement).value;
+                        if (!url) return alert("Cole uma URL primeiro!");
+                        
+                        try {
+                          const res = await fetch("/api/test-manual-connection", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ connectionString: url })
+                          });
+                          const data = await res.json();
+                          if (data.status === "ok") {
+                            alert(`🚀 TESTE MANUAL: SUCESSO!\n\nEsta URL funciona perfeitamente.\nBanco: ${data.database}\n\nAgora copie esta URL e cole no Vercel.`);
+                          } else {
+                            alert(`❌ TESTE MANUAL: FALHOU!\n\nErro: ${data.message}\n\nVerifique se a porta é 6543 e se removeu os colchetes [ ].`);
+                          }
+                        } catch (e) {
+                          alert("Erro ao processar teste manual.");
+                        }
+                      }}
+                      className="absolute right-1 top-1 bottom-1 px-2 bg-zinc-900 text-white text-[8px] rounded font-bold"
+                    >
+                      TESTAR URL
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </form>
