@@ -187,11 +187,15 @@ async function startServer() {
       });
     } catch (error: any) {
       console.error("Debug DB Error:", error);
+      let customMessage = error.message;
+      if (error.code === 'ENOTFOUND') {
+        customMessage = `ERRO DE ENDEREÇO: O Vercel não encontrou o banco '${error.hostname}'. Isso significa que a URL no Vercel está apontando para um projeto que não existe ou o ID do projeto está errado. Verifique se o ID na URL coincide com o ID do seu projeto no Supabase.`;
+      }
       res.status(500).json({ 
         status: "error", 
-        message: error.message,
+        message: customMessage,
         code: error.code,
-        details: "Verifique se a URL no Vercel está correta e sem colchetes [ ]."
+        details: "Verifique se a URL no Vercel está correta, use a porta 6543 e remova os colchetes [ ]."
       });
     }
   });
