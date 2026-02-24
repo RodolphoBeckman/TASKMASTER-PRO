@@ -184,13 +184,20 @@ async function startServer() {
 
       const result = await query("SELECT current_database(), now()");
       const tables = await query("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'");
+      const tableNames = tables.map(t => t.table_name);
+      
+      let adminExists = false;
+      if (tableNames.includes('users')) {
+        const adminCheck = await query("SELECT id FROM users WHERE username = 'admin'");
+        adminExists = adminCheck.length > 0;
+      }
       
       res.json({ 
         status: "ok", 
-        message: "Conexão com Supabase estabelecida com sucesso!",
+        message: "Conexão com Supabase estabelecida!",
         database: result[0]?.current_database,
-        time: result[0]?.now,
-        tables: tables.map(t => t.table_name),
+        tables: tableNames,
+        adminUser: adminExists ? "Encontrado" : "NÃO ENCONTRADO",
         url_used: maskedUrl
       });
     } catch (error: any) {

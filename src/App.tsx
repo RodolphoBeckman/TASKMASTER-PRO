@@ -107,7 +107,11 @@ export default function App() {
                 try {
                   const res = await fetch("/api/debug-db");
                   const data = await res.json();
-                  alert(`Diagnóstico:\nStatus: ${data.status}\nMensagem: ${data.message}\nTabelas: ${data.tables?.join(", ") || "Nenhuma"}`);
+                  if (data.status === "ok") {
+                    alert(`✅ CONEXÃO OK!\n\nBanco: ${data.database}\nTabelas: ${data.tables?.join(", ")}\nUsuário Admin: ${data.adminUser}\n\nSe o Admin estiver "NÃO ENCONTRADO", tente atualizar a página.`);
+                  } else {
+                    alert(`❌ ERRO DE CONEXÃO!\n\nMensagem: ${data.message}\n\nDetalhes: ${data.details || "Nenhum"}`);
+                  }
                 } catch (e) {
                   alert("Erro ao conectar com a API de diagnóstico. O servidor pode estar offline.");
                 }
