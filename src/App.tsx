@@ -101,6 +101,21 @@ export default function App() {
             >
               Entrar
             </button>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  const res = await fetch("/api/debug-db");
+                  const data = await res.json();
+                  alert(`Diagnóstico:\nStatus: ${data.status}\nMensagem: ${data.message}\nTabelas: ${data.tables?.join(", ") || "Nenhuma"}`);
+                } catch (e) {
+                  alert("Erro ao conectar com a API de diagnóstico. O servidor pode estar offline.");
+                }
+              }}
+              className="w-full py-2 text-zinc-400 text-[10px] hover:text-zinc-600 transition-all uppercase font-bold tracking-wider"
+            >
+              Verificar Conexão com Banco de Dados
+            </button>
           </form>
           <div className="mt-6 text-center text-xs text-zinc-400">
             Dica: admin / admin123

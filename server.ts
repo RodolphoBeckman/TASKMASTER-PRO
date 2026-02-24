@@ -102,7 +102,11 @@ async function initDb() {
   const sqliteSchema = schema.replace(/SERIAL PRIMARY KEY/g, "INTEGER PRIMARY KEY AUTOINCREMENT");
 
   if (isPostgres && pgPool) {
-    await pgPool.query(schema);
+    // Split schema into individual statements and run them
+    const statements = schema.split(';').filter(s => s.trim());
+    for (const statement of statements) {
+      await pgPool.query(statement);
+    }
   } else {
     db.exec(sqliteSchema);
   }
@@ -158,6 +162,38 @@ async function startServer() {
       servers: [{ url: appUrl }],
       paths: { /* ... same as before ... */ }
     });
+  });
+
+  // Health & Debug API
+  app.get("/api/debug-db", async (req, res) => {
+    try {
+      const dbUrl = process.env.DATABASE_URL || "";
+      const maskedUrl = dbUrl.replace(/:([^:@]+)@/, ":****@");
+      
+      if (!dbUrl) {
+        return res.json({ status: "error", message: "DATABASE_URL não configurada no Vercel." });
+      }
+
+      const result = await query("SELECT current_database(), now()");
+      const tables = await query("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'");
+      
+      res.json({ 
+        status: "ok", 
+        message: "Conexão com Supabase estabelecida com sucesso!",
+        database: result[0]?.current_database,
+        time: result[0]?.now,
+        tables: tables.map(t => t.table_name),
+        url_used: maskedUrl
+      });
+    } catch (error: any) {
+      console.error("Debug DB Error:", error);
+      res.status(500).json({ 
+        status: "error", 
+        message: error.message,
+        code: error.code,
+        details: "Verifique se a URL no Vercel está correta e sem colchetes [ ]."
+      });
+    }
   });
 
   // Auth API
