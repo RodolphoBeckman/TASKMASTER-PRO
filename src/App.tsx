@@ -29,6 +29,37 @@ export default function App() {
   const [error, setError] = useState('');
   const [view, setView] = useState<'tasks' | 'calendar' | 'admin' | 'feedback'>('tasks');
 
+  useEffect(() => {
+    // Auto-check DB status on login screen
+    if (!user) {
+      const checkStatus = async () => {
+        const dot = document.getElementById('db-status-dot');
+        const text = document.getElementById('db-status-text');
+        try {
+          const res = await fetch("/api/debug-db");
+          const data = await res.json();
+          const errorMsg = document.getElementById('db-error-msg');
+          if (data.status === "ok") {
+            if (dot) dot.className = "w-2 h-2 rounded-full bg-emerald-500";
+            if (text) text.innerText = "Conectado";
+            if (errorMsg) errorMsg.className = "hidden";
+          } else {
+            if (dot) dot.className = "w-2 h-2 rounded-full bg-red-500";
+            if (text) text.innerText = "Erro de Conexão";
+            if (errorMsg) {
+              errorMsg.className = "block mb-3 p-2 bg-red-100 border border-red-200 rounded text-[9px] text-red-700 leading-tight";
+              errorMsg.innerText = `ERRO: ${data.message}\n\n${data.details}`;
+            }
+          }
+        } catch (e) {
+          if (dot) dot.className = "w-2 h-2 rounded-full bg-red-500";
+          if (text) text.innerText = "Servidor Offline";
+        }
+      };
+      checkStatus();
+    }
+  }, [user]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -97,29 +128,56 @@ export default function App() {
             {error && <p className="text-red-500 text-sm">{error}</p>}
             <button 
               type="submit"
-              className="w-full bg-zinc-900 text-white py-2 rounded-lg font-medium hover:bg-zinc-800 transition-colors"
+              className="w-full bg-zinc-900 text-white py-3 rounded-xl font-bold hover:bg-zinc-800 transition-all shadow-lg shadow-zinc-200"
             >
-              Entrar
+              Entrar no Sistema
             </button>
-            <button
-              type="button"
-              onClick={async () => {
-                try {
-                  const res = await fetch("/api/debug-db");
-                  const data = await res.json();
-                  if (data.status === "ok") {
-                    alert(`✅ CONEXÃO OK!\n\nBanco: ${data.database}\nTabelas: ${data.tables?.join(", ")}\nUsuário Admin: ${data.adminUser}\n\nSe o Admin estiver "NÃO ENCONTRADO", tente atualizar a página.`);
-                  } else {
-                    alert(`❌ ERRO DE CONEXÃO!\n\nMensagem: ${data.message}\n\nDetalhes: ${data.details || "Nenhum"}`);
-                  }
-                } catch (e) {
-                  alert("Erro ao conectar com a API de diagnóstico. O servidor pode estar offline.");
-                }
-              }}
-              className="w-full py-2 text-zinc-400 text-[10px] hover:text-zinc-600 transition-all uppercase font-bold tracking-wider"
-            >
-              Verificar Conexão com Banco de Dados
-            </button>
+
+            <div className="pt-4 border-t border-zinc-100">
+              <div className="bg-zinc-50 p-3 rounded-xl border border-zinc-200">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Status da Integração</span>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" id="db-status-dot"></div>
+                    <span className="text-[10px] text-zinc-500 font-medium" id="db-status-text">Verificando...</span>
+                  </div>
+                </div>
+                
+                <div id="db-error-msg" className="hidden mb-3 p-2 bg-red-100 border border-red-200 rounded text-[9px] text-red-700 leading-tight">
+                </div>
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const dot = document.getElementById('db-status-dot');
+                    const text = document.getElementById('db-status-text');
+                    const errorMsg = document.getElementById('db-error-msg');
+                    try {
+                      const res = await fetch("/api/debug-db");
+                      const data = await res.json();
+                      if (data.status === "ok") {
+                        if (dot) dot.className = "w-2 h-2 rounded-full bg-emerald-500";
+                        if (text) text.innerText = "Conectado";
+                        if (errorMsg) errorMsg.className = "hidden";
+                        alert(`✅ TUDO CERTO!\n\nBanco: ${data.database}\nUsuário Admin: ${data.adminUser}`);
+                      } else {
+                        if (dot) dot.className = "w-2 h-2 rounded-full bg-red-500";
+                        if (text) text.innerText = "Erro de Conexão";
+                        if (errorMsg) {
+                          errorMsg.className = "block mb-3 p-2 bg-red-100 border border-red-200 rounded text-[9px] text-red-700 leading-tight";
+                          errorMsg.innerText = `ERRO: ${data.message}\n\n${data.details}`;
+                        }
+                      }
+                    } catch (e) {
+                      alert("Erro ao falar com o servidor.");
+                    }
+                  }}
+                  className="w-full py-2 bg-white border border-zinc-200 rounded-lg text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all uppercase tracking-tighter"
+                >
+                  Testar Conexão Agora
+                </button>
+              </div>
+            </div>
           </form>
           <div className="mt-6 text-center text-xs text-zinc-400">
             Dica: admin / admin123

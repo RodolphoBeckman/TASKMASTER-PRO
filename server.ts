@@ -190,6 +190,12 @@ async function startServer() {
       if (tableNames.includes('users')) {
         const adminCheck = await query("SELECT id FROM users WHERE username = 'admin'");
         adminExists = adminCheck.length > 0;
+        
+        if (!adminExists) {
+          console.log("Auto-reparando: Recriando usuário admin...");
+          await run("INSERT INTO users (username, password, role, name) VALUES ($1, $2, $3, $4)", ["admin", "admin123", "master", "Administrador"]);
+          adminExists = true;
+        }
       }
       
       res.json({ 
